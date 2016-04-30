@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=MPD Indicator
+GenericName=MPD Indicator
+Comment=MPD indicator
+Exec=indicator-mpd
+Terminal=false
+Type=Application
+Icon=indicator-sound-switcher
+Categories=Utility;
+StartupNotify=false
+Name[pl]=MPD Indicator
+X-GNOME-autostart-enabled=true
