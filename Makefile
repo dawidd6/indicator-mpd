@@ -1,18 +1,19 @@
-SRC=indicator-mpd
+PROGRAM=indicator-mpd
+DEBUG=1 #-DDEBUG
 all:
-	g++ $(SRC).cpp -o $(SRC) -std=c++11 \
+	gcc $(PROGRAM).c -o $(PROGRAM) \
 	`pkg-config --libs gtk+-3.0 --cflags gtk+-3.0` \
 	`pkg-config --libs appindicator3-0.1 --cflags appindicator3-0.1` \
 	`pkg-config --libs libmpdclient --cflags libmpdclient`
 
 install:
-	install $(SRC) /usr/bin
-	install $(SRC).desktop /usr/share/applications
-	install $(SRC).desktop /etc/xdg/autostart
+	install $(PROGRAM) /usr/bin
+	install $(PROGRAM).desktop /usr/share/applications
+	install $(PROGRAM).desktop /etc/xdg/autostart
 
 uninstall:
-	rm -f /usr/bin/$(SRC)
-	rm -f /usr/share/applications/$(SRC).desktop
-	rm -f /etc/xdg/autostart/$(SRC).desktop
+	rm -f /usr/bin/$(PROGRAM)
+	rm -f /usr/share/applications/$(PROGRAM).desktop
+	rm -f /etc/xdg/autostart/$(PROGRAM).desktop
 
 .PHONY: install uninstall
