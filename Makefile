@@ -1,7 +1,7 @@
 PROGRAM=indicator-mpd
-DEBUG=1 #-DDEBUG
 all:
-	gcc $(PROGRAM).c -o $(PROGRAM) \
+	@echo "[CC+LD]    $(PROGRAM)"
+	@gcc $(PROGRAM).c -o $(PROGRAM) \
 	`pkg-config --libs gtk+-3.0 --cflags gtk+-3.0` \
 	`pkg-config --libs appindicator3-0.1 --cflags appindicator3-0.1` \
 	`pkg-config --libs libmpdclient --cflags libmpdclient`
