@@ -6,6 +6,7 @@ SRC=$(wildcard src/*.c)
 OBJ=$(SRC:.c=.o)
 START_COLOR=\033[0;33m
 CLOSE_COLOR=\033[m
+DESTDIR=
 
 src/%.o: src/%.c
 	@echo "$(START_COLOR)[CC]$(CLOSE_COLOR)   $<"
@@ -19,9 +20,12 @@ install:
 	@echo "$(START_COLOR)[INSTALL]$(CLOSE_COLOR)   /usr/bin/$(PROGRAM)"
 	@echo "$(START_COLOR)[INSTALL]$(CLOSE_COLOR)   /usr/share/applications/$(PROGRAM).desktop"
 	@echo "$(START_COLOR)[INSTALL]$(CLOSE_COLOR)   /etc/xdg/autostart/$(PROGRAM).desktop"
-	@install $(PROGRAM) /usr/bin
-	@install $(PROGRAM).desktop /usr/share/applications
-	@install $(PROGRAM).desktop /etc/xdg/autostart
+	@install -d $(DESTDIR)/usr/bin
+	@install -d $(DESTDIR)/usr/share/applications
+	@install -d $(DESTDIR)/etc/xdg/autostart
+	@install $(PROGRAM) $(DESTDIR)/usr/bin
+	@install $(PROGRAM).desktop $(DESTDIR)/usr/share/applications
+	@install $(PROGRAM).desktop $(DESTDIR)/etc/xdg/autostart
 
 uninstall:
 	@echo "$(START_COLOR)[RM]$(CLOSE_COLOR)   /usr/bin/$(PROGRAM)"
@@ -35,4 +39,8 @@ clean:
 	@echo "$(START_COLOR)[RM]$(CLOSE_COLOR)   $(OBJ) $(PROGRAM)"
 	@rm -rf $(OBJ) $(PROGRAM)
 
-.PHONY: install uninstall clean
+debian:
+	debuild
+	dh clean
+
+.PHONY: install uninstall clean debian
