@@ -40,7 +40,7 @@ clean:
 	@rm -rf $(OBJ) $(PROGRAM)
 
 debian:
-	debuild
+	debuild --no-tgz-check
 	dh clean
 
 .PHONY: install uninstall clean debian
