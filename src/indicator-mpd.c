@@ -17,6 +17,7 @@ struct mpd_connection *conn;
 struct mpd_status *status;
 struct mpd_song *song;
 AppIndicator *indicator;
+FILE *config;
 
 struct widgets // Gtk... other stuff
 {
@@ -62,10 +63,21 @@ int main (int argc, char *argv[])
 
 
 	**************/
+	
+	//dirty for now
+	char path[100];
+	char addr[100];
+	char *home = getenv("HOME");
+	strcpy(path, home);
+	strcat(path, "/.config/indicator-mpd.conf");
+	config = fopen(path, "rw");
+	fscanf(config, "%s", addr);
+	fclose(config);
+	// dirrrrty shit don't touch
 
 	gtk_init (&argc, &argv);
 
-	conn = mpd_connection_new(0, 0, 3000);
+	conn = mpd_connection_new(addr, 0, 3000);
 	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS)
 	{
 		logger(1, "Connection error");
