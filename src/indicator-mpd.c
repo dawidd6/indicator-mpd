@@ -8,6 +8,9 @@
 #include <time.h>
 #include <stdarg.h>
 
+#ifndef DEBUG
+	#define DEBUG 0
+#endif
 #define INTERVAL 2
 #define MAX_WIDTH 20
 
@@ -59,11 +62,11 @@ int main (int argc, char *argv[])
 	conn = mpd_connection_new(get_addr_from_config(), 0, 3000);
 	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS)
 	{
-		logger(1, "Connection: error");
-		logger(1, "Exiting...");
+		if(DEBUG) logger(1, "Connection: error");
+		if(DEBUG) logger(1, "Exiting...");
 		return 1;
 	}
-	else logger(1, "Connection: successful");
+	else if(DEBUG) logger(1, "Connection: successful");
 
 	gtk_init (&argc, &argv);
 
@@ -143,14 +146,14 @@ char *get_addr_from_config()
 	{
 		fscanf(config, "%s", addr);
 		fclose(config);
-		logger(2, "Config: ", path);
+		if(DEBUG) logger(2, "Config: ", path);
 		if(addr)
 		{
-			logger(1, "Config: address found");
+			if(DEBUG) logger(1, "Config: address found");
 		}
-		else logger(1, "Config: address not found");
+		else if(DEBUG) logger(1, "Config: address not found");
 	}
-	else logger(1, "Config: error");
+	else if(DEBUG) logger(1, "Config: error");
 	return addr;
 }
 
@@ -184,19 +187,19 @@ gboolean update()
 			{
 				case MPD_STATE_UNKNOWN: //0
 					gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Unknown");
-					logger(1, "State: unknown");
+					if(DEBUG) logger(1, "State: unknown");
 				break;
 				case MPD_STATE_STOP: //1
 					gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Not Playing");
-					logger(1, "State: not playing");
+					if(DEBUG) logger(1, "State: not playing");
 				break;
 				case MPD_STATE_PLAY: //2
 					gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Playing");
-					logger(1, "State: playing");
+					if(DEBUG) logger(1, "State: playing");
 				break;
 				case MPD_STATE_PAUSE: //3
 					gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Paused");
-					logger(1, "State: paused");
+					if(DEBUG) logger(1, "State: paused");
 				break;
 			}
 		}
@@ -205,35 +208,35 @@ gboolean update()
 		if(strcmp(details.songid, gtk_menu_item_get_label(GTK_MENU_ITEM(items.songid))) != 0)
 		{
 			gtk_menu_item_set_label(GTK_MENU_ITEM(items.songid), details.songid);
-			logger(2, "Playing: number ", details.songid);
+			if(DEBUG) logger(2, "Playing: number ", details.songid);
 
 			if((song = mpd_run_current_song(conn)) != 0)
 			{
 				gtk_menu_item_set_label(GTK_MENU_ITEM(items.title), shrink_to_fit(mpd_song_get_tag(song, MPD_TAG_TITLE, 0), MAX_WIDTH));
 				gtk_menu_item_set_label(GTK_MENU_ITEM(items.artist), shrink_to_fit(mpd_song_get_tag(song, MPD_TAG_ARTIST, 0), MAX_WIDTH));
 			}
-			else logger(1, "Song: error");
+			else if(DEBUG) logger(1, "Song: error");
 		}
 	}
-	else logger(1, "Status: error");
+	else if(DEBUG) logger(1, "Status: error");
 	return true;
 }
 
 void run_toggle()
 {
 	mpd_run_toggle_pause(conn);
-	logger(1, "Song: toggle");
+	if(DEBUG) logger(1, "Song: toggle");
 }
 
 void run_next()
 {
 	mpd_run_next(conn);
-	logger(1, "Song: next");
+	if(DEBUG) logger(1, "Song: next");
 }
 
 void run_previous()
 {
 	mpd_run_previous(conn);
-	logger(1, "Song: prev");
+	if(DEBUG) logger(1, "Song: prev");
 }
 /*END* FUNCTIONS DEFINITIONS *END*/
