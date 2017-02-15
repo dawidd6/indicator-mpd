@@ -17,7 +17,6 @@ struct mpd_connection *conn;
 struct mpd_status *status;
 struct mpd_song *song;
 AppIndicator *indicator;
-FILE *config;
 
 struct widgets // Gtk... other stuff
 {
@@ -49,7 +48,7 @@ struct details // some things we would like to get from mpd server
 
 /* FUNCTIONS DECLARATIONS */
 void logger(unsigned int count, ...);
-char *strcatext(unsigned int count, ...);
+char *get_addr_from_config();
 gboolean update();
 void run_toggle();
 void run_next();
@@ -59,32 +58,16 @@ void run_previous();
 /* MAIN */
 int main (int argc, char *argv[])
 {
-	/* PLAYGROUND *
-	char *kuc = strcatext(2, "jeden ", "dwa");
-	printf("%s\n", kuc);
-
-
-	**************/
-
-	//dirty for now
-	char path[100];
-	char addr[100];
-	char *home = getenv("HOME");
-	strcpy(path, home);
-	strcat(path, "/.config/indicator-mpd.conf");
-	config = fopen(path, "rw");
-	fscanf(config, "%s", addr);
-	fclose(config);
-	// dirrrrty shit don't touch
-
-	gtk_init (&argc, &argv);
-
-	conn = mpd_connection_new(addr, 0, 3000);
+	conn = mpd_connection_new(get_addr_from_config(), 0, 3000);
 	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS)
 	{
-		logger(1, "Connection error");
+		logger(1, "Connection: error");
+		logger(1, "Exiting...");
+		return 1;
 	}
-	else logger(1, "Connection successful");
+	else logger(1, "Connection: successful");
+
+	gtk_init (&argc, &argv);
 
 	widgets.menu = gtk_menu_new();
 
@@ -134,7 +117,7 @@ int main (int argc, char *argv[])
 /*END* MAIN *END*/
 
 /* FUNCTIONS DEFINITIONS */
-void logger(unsigned int count, ...) //const char * ... huj tam, powinno wejsc wszystko jak sie zmieni va_arg
+void logger(unsigned int count, ...)
 {
 	time_t mytime = time(0);
 	va_list vl;
@@ -150,22 +133,28 @@ void logger(unsigned int count, ...) //const char * ... huj tam, powinno wejsc w
 	printf("\n");
 }
 
-/* EXPERIMENTAL */
-char *strcatext(unsigned int count, ...)
+char *get_addr_from_config()
 {
-	char *res;
-	va_list vl;
-	va_start(vl, count);
-	for(unsigned int i = 0; i < count; i++)
+	char *addr = malloc(50);
+	char *path = malloc(50);
+	strcpy(path, getenv("HOME"));
+	strcat(path, "/.config/indicator-mpd.conf");
+	FILE *config = fopen(path, "r");
+
+	if(config)
 	{
-		const char *tmp = va_arg(vl, const char *);
-		res = realloc(res, sizeof(char) * strlen(tmp));
-		strcat(res, tmp);
+		fscanf(config, "%s", addr);
+		fclose(config);
+		logger(2, "Config: ", path);
+		if(addr)
+		{
+			logger(1, "Config: address found");
+		}
+		else logger(1, "Config: address not found");
 	}
-	va_end(vl);
-	return res;
+	else logger(1, "Config: error");
+	return addr;
 }
-/*END* EXPERIMENTAL *END*/
 
 gboolean update()
 {
@@ -199,35 +188,35 @@ gboolean update()
 		if(strcmp(details.songid, gtk_menu_item_get_label(GTK_MENU_ITEM(items.songid))) != 0)
 		{
 			gtk_menu_item_set_label(GTK_MENU_ITEM(items.songid), details.songid);
-			logger(2, "Now playing no. ", details.songid);
+			logger(2, "Playing: number ", details.songid);
 
 			if((song = mpd_run_current_song(conn)) != 0)
 			{
 				gtk_menu_item_set_label(GTK_MENU_ITEM(items.title), mpd_song_get_tag(song, MPD_TAG_TITLE, 0));
 				gtk_menu_item_set_label(GTK_MENU_ITEM(items.artist), mpd_song_get_tag(song, MPD_TAG_ARTIST, 0));
 			}
-			else logger(1, "Song error");
+			else logger(1, "Song: error");
 		}
 	}
-	else logger(1, "Status error");
+	else logger(1, "Status: error");
 	return true;
 }
 
 void run_toggle()
 {
 	mpd_run_toggle_pause(conn);
-	logger(1, "Toggled");
+	logger(1, "Song: toggle");
 }
 
 void run_next()
 {
 	mpd_run_next(conn);
-	logger(1, "Next song");
+	logger(1, "Song: next");
 }
 
 void run_previous()
 {
 	mpd_run_previous(conn);
-	logger(1, "Previous song");
+	logger(1, "Song: prev");
 }
 /*END* FUNCTIONS DEFINITIONS *END*/
