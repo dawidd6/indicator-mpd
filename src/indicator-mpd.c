@@ -9,8 +9,7 @@
 #include <stdarg.h>
 
 #define INTERVAL 2
-#define SECOND_WORLD_LENGTH 10
-#define FIRST_WORLD_LENGTH 20
+#define MAX_WIDTH 20
 
 /* GLOBAL VARIABLES */ //because shit's on fire yo
 struct mpd_connection *conn;
@@ -37,10 +36,8 @@ struct items // GtkMenuItem
 
 struct details // some things we would like to get from mpd server
 {
-	char title[FIRST_WORLD_LENGTH];
-	char artist[FIRST_WORLD_LENGTH];
-	char volume[SECOND_WORLD_LENGTH];
-	char songid[SECOND_WORLD_LENGTH];
+	char volume[10];
+	char songid[10];
 	short state;
 } details;
 /*END* GLOBAL VARIABLES *END*/
@@ -49,6 +46,7 @@ struct details // some things we would like to get from mpd server
 /* FUNCTIONS DECLARATIONS */
 void logger(unsigned int count, ...);
 char *get_addr_from_config();
+char *shrink_to_fit(const char *source, unsigned int len);
 gboolean update();
 void run_toggle();
 void run_next();
@@ -156,6 +154,25 @@ char *get_addr_from_config()
 	return addr;
 }
 
+char *shrink_to_fit(const char *source, unsigned int len)
+{
+	if(strlen(source) <= len)
+		return (char *)source;
+	else
+	{
+		char *res = malloc(len + 3);
+		for(unsigned int i = 0; i < len; i++)
+		{
+			res[i] = source[i];
+		}
+		res[len] = '.';
+		res[len + 1] = '.';
+		res[len + 2] = '.';
+		res[len + 3] = '\0';
+		return res;
+	}
+}
+
 gboolean update()
 {
 	if((status = mpd_run_status(conn)) != 0)
@@ -192,8 +209,8 @@ gboolean update()
 
 			if((song = mpd_run_current_song(conn)) != 0)
 			{
-				gtk_menu_item_set_label(GTK_MENU_ITEM(items.title), mpd_song_get_tag(song, MPD_TAG_TITLE, 0));
-				gtk_menu_item_set_label(GTK_MENU_ITEM(items.artist), mpd_song_get_tag(song, MPD_TAG_ARTIST, 0));
+				gtk_menu_item_set_label(GTK_MENU_ITEM(items.title), shrink_to_fit(mpd_song_get_tag(song, MPD_TAG_TITLE, 0), MAX_WIDTH));
+				gtk_menu_item_set_label(GTK_MENU_ITEM(items.artist), shrink_to_fit(mpd_song_get_tag(song, MPD_TAG_ARTIST, 0), MAX_WIDTH));
 			}
 			else logger(1, "Song: error");
 		}
