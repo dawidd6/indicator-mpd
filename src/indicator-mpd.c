@@ -33,6 +33,7 @@ struct items // GtkMenuItem
 	GtkWidget *toggle;
 	GtkWidget *artist;
 	GtkWidget *songid;
+	GtkWidget *state;
 } items;
 
 struct details // some things we would like to get from mpd server
@@ -41,6 +42,7 @@ struct details // some things we would like to get from mpd server
 	char artist[FIRST_WORLD_LENGTH];
 	char volume[SECOND_WORLD_LENGTH];
 	char songid[SECOND_WORLD_LENGTH];
+	short state;
 } details;
 /*END* GLOBAL VARIABLES *END*/
 
@@ -63,7 +65,7 @@ int main (int argc, char *argv[])
 
 
 	**************/
-	
+
 	//dirty for now
 	char path[100];
 	char addr[100];
@@ -97,6 +99,10 @@ int main (int argc, char *argv[])
 	items.songid = gtk_menu_item_new();
 	gtk_menu_shell_append (GTK_MENU_SHELL(widgets.menu), items.songid);
 	gtk_widget_set_sensitive (items.songid, false);
+
+	items.state = gtk_menu_item_new();
+	gtk_menu_shell_append (GTK_MENU_SHELL(widgets.menu), items.state);
+	gtk_widget_set_sensitive (items.state, false);
 
 	items.toggle = gtk_menu_item_new_with_label("Play / Pause");
 	gtk_menu_shell_append (GTK_MENU_SHELL(widgets.menu), items.toggle);
@@ -165,6 +171,30 @@ gboolean update()
 {
 	if((status = mpd_run_status(conn)) != 0)
 	{
+		if(details.state != mpd_status_get_state(status))
+		{
+			details.state = mpd_status_get_state(status);
+			switch(details.state)
+			{
+				case MPD_STATE_UNKNOWN: //0
+					gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Unknown");
+					logger(1, "State: unknown");
+				break;
+				case MPD_STATE_STOP: //1
+					gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Not Playing");
+					logger(1, "State: not playing");
+				break;
+				case MPD_STATE_PLAY: //2
+					gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Playing");
+					logger(1, "State: playing");
+				break;
+				case MPD_STATE_PAUSE: //3
+					gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Paused");
+					logger(1, "State: paused");
+				break;
+			}
+		}
+
 		sprintf(details.songid, "%d", mpd_status_get_song_pos(status) + 1);
 		if(strcmp(details.songid, gtk_menu_item_get_label(GTK_MENU_ITEM(items.songid))) != 0)
 		{
