@@ -8,7 +8,7 @@
 #include <time.h>
 #include <stdarg.h>
 
-#define INTERVAL 3
+#define INTERVAL 2
 #define SECOND_WORLD_LENGTH 10
 #define FIRST_WORLD_LENGTH 20
 
