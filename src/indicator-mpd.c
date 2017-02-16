@@ -218,7 +218,12 @@ gboolean update()
 			else if(DEBUG) logger(1, "Song: error");
 		}
 	}
-	else if(DEBUG) logger(1, "Status: error");
+	else
+	{
+		if(DEBUG) logger(1, "Status: error");
+		if(DEBUG) logger(1, "Connection: reconnect");
+		conn = mpd_connection_new(get_addr_from_config(), 0, 3000);
+	}
 	return true;
 }
 
