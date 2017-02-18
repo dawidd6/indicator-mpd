@@ -7,9 +7,6 @@ OBJ=$(SRC:.c=.o)
 START_COLOR=\033[0;33m
 CLOSE_COLOR=\033[m
 DESTDIR=
-ifeq ($(DEBUG), 1)
-CFLAGS+=-DDEBUG=1
-endif
 
 src/%.o: src/%.c
 	@echo "$(START_COLOR)[CC]$(CLOSE_COLOR)   $<"
