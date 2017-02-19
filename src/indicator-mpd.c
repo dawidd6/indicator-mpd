@@ -96,8 +96,8 @@ int main (int argc, char *argv[])
 	config_read();
 
 	conn = mpd_connection_new(config.address, config.port, config.timeout);
-	if(mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS)
-		return 1;
+	//if(mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS)
+	//	return 1;
 
 	gtk_init(&argc, &argv);
 
