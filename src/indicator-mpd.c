@@ -1,32 +1,3 @@
-/*
- * MIT License
- *
- * Copyright (c) 2017 Dawid Dziurla (dawidd6)
- *
- * Permission is hereby granted, free of charge,
- * to any person obtaining a copy of this software
- * and associated documentation files (the "Software"),
- * to deal in the Software without restriction,
- * including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons
- * to whom the Software is furnished to do so,
- * subject to the following conditions:
-
- * The above copyright notice and this permission notice
- * shall be included in all copies or substantial portions
- * of the Software.
-
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
- * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 #include <gtk/gtk.h>
 #include <libappindicator/app-indicator.h>
 #include <mpd/client.h>
@@ -60,7 +31,6 @@ struct items // GtkMenuItem
 	GtkWidget *state;
 	GtkWidget *playlists;
 	GtkWidget *clear;
-	GtkWidget *playpos;
 } items;
 
 struct config // config essentials
@@ -88,8 +58,6 @@ void run_previous();
 void run_clear();
 void run_play();
 void populate_playlists();
-void show_play_pos();
-void run_play_pos(GtkWidget *widget, gpointer gpos);
 void load_playlist(GtkMenuItem *item);
 
 int main(int argc, char *argv[])
@@ -143,10 +111,6 @@ int main(int argc, char *argv[])
 	gtk_menu_shell_append(GTK_MENU_SHELL(widgets.menu), items.playlists);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(items.playlists), widgets.playlists);
 	populate_playlists();
-
-	items.playpos = gtk_menu_item_new_with_label("Play #");
-	gtk_menu_shell_append(GTK_MENU_SHELL(widgets.menu), items.playpos);
-	g_signal_connect(items.playpos, "activate", show_play_pos, NULL);
 
 	items.quit = gtk_menu_item_new_with_label("Quit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(widgets.menu), items.quit);
@@ -271,59 +235,6 @@ char *shrink_to_fit(const char *source, unsigned int len)
 
 	gtk_widget_show_all(window);
 }*/
-
-/*
- * That's somehow unstable, but
- * casts..., gpointers...,
- * maybe something to do with these
- * idk
- */
-void run_play_pos(GtkWidget *widget, gpointer gpos)
-{
-	unsigned int pos = atoi((const char *)gpos) - 1; // -1 to get proper position in mpd playlist
-	mpd_run_play_pos(conn, pos);
-}
-
-void show_play_pos()
-{
-	GtkWidget *window;
-	GtkWidget *grid;
-	GtkWidget *button;
-	GtkWidget *label;
-	GtkWidget *entry;
-
-	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	grid = gtk_grid_new();
-	button = gtk_button_new_with_label("Play");
-	label = gtk_label_new("Position: ");
-	entry = gtk_entry_new();
-
-	gtk_container_add(GTK_CONTAINER(window), grid);
-
-	gtk_widget_set_size_request(window, 150, 30);
-	gtk_widget_set_size_request(button, 40, 30);
-	gtk_widget_set_size_request(label, 40, 30);
-	gtk_widget_set_size_request(entry, 70, 30);
-
-	gtk_grid_insert_row(GTK_GRID(grid), 1);
-	gtk_grid_insert_column(GTK_GRID(grid), 3);
-	gtk_grid_attach(GTK_GRID(grid), label, 1, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), entry, 2, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), button, 3, 1, 1, 1);
-
-	gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
-	gtk_window_set_title(GTK_WINDOW(window), "Play #");
-	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-
-	gtk_entry_set_text(GTK_ENTRY(entry), "0"); // without this, gtk_get_get_text doesn't return shit, idk what's wrong
-
-	g_signal_connect(button, "clicked", G_CALLBACK(run_play_pos), (gpointer)gtk_entry_get_text(GTK_ENTRY(entry)));
-	g_signal_connect(entry, "activate", G_CALLBACK(run_play_pos), (gpointer)gtk_entry_get_text(GTK_ENTRY(entry)));
-	g_signal_connect(button, "clicked", G_CALLBACK(gtk_window_close), (gpointer)GTK_WINDOW(window));
-	g_signal_connect(entry, "activate", G_CALLBACK(gtk_window_close), (gpointer)GTK_WINDOW(window));
-
-	gtk_widget_show_all(window);
-}
 
 gboolean update()
 {
