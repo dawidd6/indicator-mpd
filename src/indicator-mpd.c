@@ -1,4 +1,3 @@
-#include <gtk/gtk.h>
 #include <libappindicator/app-indicator.h>
 #include <mpd/client.h>
 #include <stdlib.h>
@@ -8,18 +7,19 @@
 #define INTERVAL 2
 #define MAX_WIDTH 30
 
+/* Vars */
 struct mpd_connection *conn;
 struct mpd_status *status;
 struct mpd_song *song;
 AppIndicator *indicator;
 
-struct widgets // Gtk... other stuff
+struct widgets
 {
 	GtkWidget *menu;
 	GtkWidget *playlists;
 } widgets;
 
-struct items // GtkMenuItem
+struct items
 {
 	GtkWidget *prev;
 	GtkWidget *next;
@@ -33,7 +33,7 @@ struct items // GtkMenuItem
 	GtkWidget *clear;
 } items;
 
-struct config // config essentials
+struct config
 {
 	FILE *file;
 	char address[50];
@@ -42,15 +42,16 @@ struct config // config essentials
 	unsigned int timeout;
 } config = {.port = 0, .timeout = 3000};
 
-struct details // mpd essentials
+struct details
 {
 	char title[MAX_WIDTH * 2 + 4];
 	char songid[10];
 	short state;
 } details;
 
+/* Functions' declarations */
 char *shrink_to_fit(const char *source, unsigned int len);
-gboolean update();
+static gboolean update();
 void config_read();
 void run_toggle();
 void run_next();
@@ -60,9 +61,10 @@ void run_play();
 void populate_playlists();
 void load_playlist(GtkMenuItem *item);
 
+/* Main */
 int main(int argc, char *argv[])
 {
-	snprintf(config.path, 50, "%s/.config/indicator-mpd.conf", getenv("HOME"));
+	sprintf(config.path, "%s/.config/indicator-mpd.conf", getenv("HOME"));
 
 	config_read();
 
@@ -110,6 +112,7 @@ int main(int argc, char *argv[])
 	items.playlists = gtk_menu_item_new_with_label("Playlists");
 	gtk_menu_shell_append(GTK_MENU_SHELL(widgets.menu), items.playlists);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(items.playlists), widgets.playlists);
+
 	populate_playlists();
 
 	items.quit = gtk_menu_item_new_with_label("Quit");
@@ -128,6 +131,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+/* Functions' definitions */
 void load_playlist(GtkMenuItem *item)
 {
 	run_clear();
@@ -259,13 +263,12 @@ gboolean update()
 			case MPD_STATE_PLAY: //2
 				gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Playing");
 
-				snprintf(details.songid, 10, "#%d/%d", mpd_status_get_song_pos(status) + 1, mpd_status_get_queue_length(status));
+				sprintf(details.songid, "#%d/%d", mpd_status_get_song_pos(status) + 1, mpd_status_get_queue_length(status));
 
 				if((song = mpd_run_current_song(conn)) != 0)
 				{
 					gtk_menu_item_set_label(GTK_MENU_ITEM(items.songid), details.songid);
-					snprintf(details.title, \
-							MAX_WIDTH * 2 + 4, \
+					sprintf(details.title, \
 							"%s - %s", \
 							shrink_to_fit(mpd_song_get_tag(song, MPD_TAG_ARTIST, 0), MAX_WIDTH), \
 							shrink_to_fit(mpd_song_get_tag(song, MPD_TAG_TITLE, 0), MAX_WIDTH));
