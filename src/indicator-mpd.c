@@ -8,18 +8,14 @@
 #define MAX_WIDTH 30
 
 /* Vars */
-struct mpd_connection *conn;
-struct mpd_status *status;
-struct mpd_song *song;
-AppIndicator *indicator;
 
-struct widgets
+struct indi_widgets
 {
 	GtkWidget *menu;
 	GtkWidget *playlists;
-} widgets;
+};
 
-struct items
+struct indi_items
 {
 	GtkWidget *prev;
 	GtkWidget *next;
@@ -32,24 +28,33 @@ struct items
 	GtkWidget *playlists;
 	GtkWidget *clear;
 	GtkWidget *reconnect;
-} items;
+};
 
-struct config
+struct indi_config
 {
-	FILE *file;
 	char address[50];
 	char path[50];
 	unsigned int port;
 	unsigned int timeout;
-} config = {.port = 0, .timeout = 3000};
+	FILE *file;
+};
 
-struct details
+struct indi_details
 {
 	char title[MAX_WIDTH * 2 + 4];
 	char songid[10];
 	int state;
 	int connected;
-} details;
+};
+
+struct mpd_connection *conn;
+struct mpd_status *status;
+struct mpd_song *song;
+struct indi_widgets widgets;
+struct indi_items items;
+struct indi_details details;
+struct indi_config config = {"127.0.0.1", "/root/.config/indicator-mpd.conf", 0, 3000};
+AppIndicator *indicator;
 
 /* Functions' declarations */
 char *shrink_to_fit(const char *source, unsigned int len);
@@ -320,7 +325,8 @@ void establish_connection()
 		gtk_widget_hide(items.next);
 		gtk_widget_hide(items.prev);
 		gtk_widget_hide(items.clear);
-		gtk_widget_hide(items.playlists);
+		if(GTK_IS_WIDGET(items.playlists))
+			gtk_widget_hide(items.playlists);
 	}
 }
 
