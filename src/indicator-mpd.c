@@ -31,6 +31,7 @@ struct items
 	GtkWidget *state;
 	GtkWidget *playlists;
 	GtkWidget *clear;
+	GtkWidget *reconnect;
 } items;
 
 struct config
@@ -46,7 +47,8 @@ struct details
 {
 	char title[MAX_WIDTH * 2 + 4];
 	char songid[10];
-	short state;
+	int state;
+	int connected;
 } details;
 
 /* Functions' declarations */
@@ -60,6 +62,7 @@ void run_clear();
 void run_play();
 void populate_playlists();
 void load_playlist(GtkMenuItem *item);
+void establish_connection();
 
 /* Main */
 int main(int argc, char *argv[])
@@ -67,10 +70,6 @@ int main(int argc, char *argv[])
 	sprintf(config.path, "%s/.config/indicator-mpd.conf", getenv("HOME"));
 
 	config_read();
-
-	conn = mpd_connection_new(config.address, config.port, config.timeout);
-	//if(mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS)
-	//	return 1;
 
 	gtk_init(&argc, &argv);
 
@@ -109,11 +108,9 @@ int main(int argc, char *argv[])
 	gtk_menu_shell_append(GTK_MENU_SHELL(widgets.menu), items.clear);
 	g_signal_connect(items.clear, "activate", G_CALLBACK(run_clear), NULL);
 
-	items.playlists = gtk_menu_item_new_with_label("Playlists");
-	gtk_menu_shell_append(GTK_MENU_SHELL(widgets.menu), items.playlists);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(items.playlists), widgets.playlists);
-
-	populate_playlists();
+	items.reconnect = gtk_menu_item_new_with_label("Reconnect");
+	gtk_menu_shell_append(GTK_MENU_SHELL(widgets.menu), items.reconnect);
+	g_signal_connect(items.reconnect, "activate", G_CALLBACK(establish_connection), NULL);
 
 	items.quit = gtk_menu_item_new_with_label("Quit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(widgets.menu), items.quit);
@@ -124,9 +121,10 @@ int main(int argc, char *argv[])
 	app_indicator_set_menu(indicator, GTK_MENU(widgets.menu));
 	app_indicator_set_title(indicator, "MPD Indicator");
 
-	g_timeout_add_seconds(INTERVAL, update, 0);
-
 	gtk_widget_show_all(widgets.menu);
+
+	establish_connection();
+
 	gtk_main();
 	return 0;
 }
@@ -141,7 +139,17 @@ void load_playlist(GtkMenuItem *item)
 
 void populate_playlists()
 {
-	mpd_send_list_playlists (conn);
+	if(GTK_IS_WIDGET(items.playlists))
+		gtk_widget_destroy(items.playlists);
+	items.playlists = gtk_menu_item_new_with_label("Playlists");
+	gtk_menu_shell_insert(GTK_MENU_SHELL(widgets.menu), items.playlists, 8);
+
+	if(GTK_IS_WIDGET(widgets.playlists))
+		gtk_widget_destroy(widgets.playlists);
+	widgets.playlists = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(items.playlists), widgets.playlists);
+
+	mpd_send_list_playlists(conn);
 	struct mpd_entity *entity;
 	const struct mpd_playlist *playlist;
 	while((entity = mpd_recv_entity(conn)) != NULL)
@@ -242,7 +250,7 @@ char *shrink_to_fit(const char *source, unsigned int len)
 
 gboolean update()
 {
-	if((status = mpd_run_status(conn)) != 0)
+	if(details.connected && ((status = mpd_run_status(conn)) != 0))
 	{
 		switch(mpd_status_get_state(status))
 		{
@@ -281,9 +289,39 @@ gboolean update()
 				gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Paused");
 			break;
 		}
+		return 1;
 	}
-	else conn = mpd_connection_new(config.address, config.port, config.timeout);
-	return TRUE;
+	else
+	{
+		establish_connection();
+		return 0;
+	}
+}
+
+void establish_connection()
+{
+	conn = mpd_connection_new(config.address, config.port, config.timeout);
+	if(mpd_connection_get_error(conn) == MPD_ERROR_SUCCESS)
+	{
+		details.connected = 1;
+		populate_playlists();
+		g_timeout_add_seconds(INTERVAL, update, 0);
+		gtk_widget_show_all(widgets.menu);
+	}
+	else
+	{
+		details.connected = 0;
+		gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Connection error");
+		app_indicator_set_label(indicator, "", NULL);
+		gtk_widget_hide(items.artist);
+		gtk_widget_hide(items.title);
+		gtk_widget_hide(items.songid);
+		gtk_widget_hide(items.toggle);
+		gtk_widget_hide(items.next);
+		gtk_widget_hide(items.prev);
+		gtk_widget_hide(items.clear);
+		gtk_widget_hide(items.playlists);
+	}
 }
 
 /*
