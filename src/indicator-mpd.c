@@ -8,7 +8,6 @@
 #define MAX_WIDTH 30
 
 /* Vars */
-
 struct indi_widgets
 {
 	GtkWidget *menu;
@@ -68,6 +67,7 @@ void run_play();
 void populate_playlists();
 void load_playlist(GtkMenuItem *item);
 void establish_connection();
+void logger(const char *str, ...);
 
 /* Main */
 int main(int argc, char *argv[])
@@ -139,6 +139,7 @@ void load_playlist(GtkMenuItem *item)
 {
 	run_clear();
 	mpd_run_load(conn, gtk_menu_item_get_label(item));
+	logger("PLAYLISTS: loaded = ", gtk_menu_item_get_label(item), NULL);
 	run_play();
 }
 
@@ -166,6 +167,7 @@ void populate_playlists()
 			gtk_menu_shell_append (GTK_MENU_SHELL(widgets.playlists), tmp);
 			gtk_menu_item_set_label(GTK_MENU_ITEM(tmp), mpd_playlist_get_path(playlist));
 			g_signal_connect(tmp, "activate", G_CALLBACK(load_playlist), tmp);
+			logger("PLAYLISTS: added = ", mpd_playlist_get_path(playlist), NULL);
 		}
 		mpd_entity_free(entity);
 	}
@@ -183,6 +185,7 @@ void config_read()
 			sscanf(line, "port = %u", &config.port);
 			sscanf(line, "timeout = %u", &config.timeout);
 		}
+		logger("CONFIG: loaded = ", config.path, NULL);
 		fclose(config.file);
 	}
 }
@@ -288,6 +291,7 @@ gboolean update()
 					gtk_menu_item_set_label(GTK_MENU_ITEM(items.title), shrink_to_fit(mpd_song_get_tag(song, MPD_TAG_TITLE, 0), MAX_WIDTH));
 					gtk_menu_item_set_label(GTK_MENU_ITEM(items.artist), shrink_to_fit(mpd_song_get_tag(song, MPD_TAG_ARTIST, 0), MAX_WIDTH));
 					app_indicator_set_label(indicator, details.title, NULL);
+					logger("SONG: playing = ", details.title, NULL);
 				}
 			break;
 			case MPD_STATE_PAUSE: //3
@@ -308,6 +312,7 @@ void establish_connection()
 	conn = mpd_connection_new(config.address, config.port, config.timeout);
 	if(mpd_connection_get_error(conn) == MPD_ERROR_SUCCESS)
 	{
+		logger("CONNECTION: established", NULL);
 		details.connected = 1;
 		populate_playlists();
 		g_timeout_add_seconds(INTERVAL, update, 0);
@@ -315,6 +320,7 @@ void establish_connection()
 	}
 	else
 	{
+		logger("CONNECTION: error", NULL);
 		details.connected = 0;
 		gtk_menu_item_set_label(GTK_MENU_ITEM(items.state), "Connection error");
 		app_indicator_set_label(indicator, "", NULL);
@@ -328,6 +334,21 @@ void establish_connection()
 		if(GTK_IS_WIDGET(items.playlists))
 			gtk_widget_hide(items.playlists);
 	}
+}
+
+void logger(const char *str, ...)
+{
+	time_t mytime = time(0);
+	va_list vl;
+	const char *tmp = str;
+	printf("[%s] %s", strtok(ctime(&mytime), "\n"), tmp);
+
+	va_start(vl, str);
+	while((tmp = va_arg(vl, const char *)))
+		printf("%s", tmp);
+	va_end(vl);
+
+	printf("\n");
 }
 
 /*
@@ -357,6 +378,7 @@ void run_previous()
 void run_clear()
 {
 	mpd_run_clear(conn);
+	logger("PLAYLIST: cleared", NULL);
 }
 
 void run_play()
