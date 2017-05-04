@@ -1,6 +1,6 @@
 #Assembled by dawidd6
 COMPILER=gcc
-CFLAGS=-Wall -std=c11 `pkg-config --libs --cflags appindicator3-0.1 libmpdclient`
+CFLAGS=-Wall -fPIC -std=c11 $(shell pkg-config --libs --cflags appindicator3-0.1 libmpdclient)
 PROGRAM=indicator-mpd
 SRC=$(wildcard src/*.c)
 OBJ=$(SRC:.c=.o)
