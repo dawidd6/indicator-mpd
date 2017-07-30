@@ -1,12 +1,13 @@
 Source: indicator-mpd
 Section: misc
 Priority: optional
-Maintainer: dawidd6 <dawidd0811@gmail.com>
+Maintainer: Dawid Dziurla <dawidd0811@gmail.com>
 Build-Depends: debhelper (>=9), libmpdclient-dev, libgtk-3-dev, libappindicator3-dev
 Standards-Version: 3.9.7
 Homepage: https://github.com/dawidd6/indicator-mpd
 
 Package: indicator-mpd
 Architecture: any
-Depends: libmpdclient2, libappindicator3-1
+Depends: ${shlibs:Depends}, ${misc:Depends}, libmpdclient2, libappindicator3-1
 Description: MPD Indicator
+ Ubuntu (unity) panel indicator
